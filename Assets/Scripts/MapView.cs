@@ -1,80 +1,101 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json;
 using System.IO;
-using UnityEditor.Experimental.GraphView;
-using System.Xml.Linq;
+using System.Linq;
 
 public class MapView : MonoBehaviour
 {
-    [SerializeField] GameObject dotPrefab;
+    [SerializeField] GameObject nodePrefab;
 
-    // Start is called before the first frame update
     void Start()
     {
-        Camera.main.transform.position = new Vector3(13.335f, 52.51f, -1);
+        Vector3 startingCamPos = new Vector3(13331.2783f, 52509.2031f, -1);
+        Camera.main.transform.position = startingCamPos;
 
         string jsonString = File.ReadAllText("Assets/Resources/data.json");
         JSONData data = JsonConvert.DeserializeObject<JSONData>(jsonString);
-        List<GameObject> dots = new List<GameObject>();
+
+        List<Element> elementNodes = new List<Element>();
+        List<Element> ways = new List<Element>();
 
         foreach (Element element in data.elements)
         {
             Debug.Log(element.ToString());
             if (element.type == "node")
             {
-                Vector3 position = new Vector2((float)(element.lon), (float)(element.lat));
-                GameObject dot = Instantiate(dotPrefab, position, Quaternion.identity);
-                dots.Add(dot);
+                elementNodes.Add(element);
+            }
+            else if (element.type == "way")
+            {
+                ways.Add(element);
             }
         }
 
-        //ConnectDotsWithLines(dots);
+        List<GameObject> nodes = CreateDots(elementNodes);
+        ConnectDotsWithLines(nodes, ways);
     }
 
-    void ConnectDotsWithLines(List<GameObject> dots)
+    List<GameObject> CreateDots(List<Element> elementNodes)
     {
-        Debug.Log(dots.Count);
-        if (dots.Count < 2)
+        List<GameObject> nodes = new List<GameObject>();
+
+        foreach (Element elementNode in elementNodes)
         {
-            Debug.LogWarning("Cannot connect dots. Insufficient number of dots available.");
-            return;
+            float scale = 1000;
+            Vector3 position = new Vector2(elementNode.lon * scale, elementNode.lat * scale);
+            GameObject dot = Instantiate(nodePrefab, position, Quaternion.identity, transform.Find("Nodes"));
+            NodeInfo nodeInfo = dot.AddComponent<NodeInfo>();
+            nodeInfo.type = elementNode.type;
+            nodeInfo.id = elementNode.id;
+            nodeInfo.lat = elementNode.lat;
+            nodeInfo.lon = elementNode.lon;
+            /* if (elementNode.tags != null)
+             {
+                 nodeInfo.tags = elementNode.tags.ToDictionary(kv => kv.Key, kv => kv.Value.ToString()); 
+            }*/
+            nodes.Add(dot);
         }
+        return nodes;
+    }
 
-        GameObject lineObj = new GameObject("Line");
-        lineObj.transform.SetParent(transform);
-
-        LineRenderer lineRenderer = lineObj.AddComponent<LineRenderer>();
-        //lineRenderer.material = lineMaterial;
-        lineRenderer.startWidth = 0.00005f;
-        lineRenderer.endWidth = 0.00005f;
-
-        lineRenderer.positionCount = dots.Count;
-        for (int i = 0; i < dots.Count; i++)
+    private void ConnectDotsWithLines(List<GameObject> nodes, List<Element> ways)
+    {
+        foreach (Element way in ways)
         {
-            lineRenderer.SetPosition(i, dots[i].transform.position);
+            List<GameObject> connectedDots = new List<GameObject>();
+
+            foreach (long nodeId in way.nodeIds)
+            {
+                GameObject node = nodes.Find(x => x.GetComponent<NodeInfo>().id == nodeId);
+                if (node != null)
+                {
+                    connectedDots.Add(node);
+                }
+            }
+
+            if (connectedDots.Count > 1)
+            {
+                CreateLineRenderer(connectedDots);
+            }
         }
     }
 
-    /*Vector3 ConvertLatLonToScreenPosition(double latitude, double longitude)
+    private void CreateLineRenderer(List<GameObject> nodes)
     {
-        // Define the latitude and longitude range in your data
-        double minLatitude = 52.0;
-        double maxLatitude = 54.0;
-        double minLongitude = 12.0;
-        double maxLongitude = 14.0;
+        GameObject way = new GameObject("Way");
+        way.transform.SetParent(transform.Find("Ways"));
 
-        // Get the normalized values of latitude and longitude within the defined range
-        float normalizedLatitude = (float)((latitude - minLatitude) / (maxLatitude - minLatitude));
-        float normalizedLongitude = (float)((longitude - minLongitude) / (maxLongitude - minLongitude));
+        LineRenderer lineRenderer = way.AddComponent<LineRenderer>();
+        //Material defaultMaterial = Resources.GetBuiltinResource<Material>("Default-Material");
+        //lineRenderer.material = defaultMaterial;
+        lineRenderer.startWidth = 0.1f;
+        lineRenderer.endWidth = 0.1f;
 
-        // Get the screen position based on normalized values
-        Vector3 screenPosition = new Vector3(normalizedLongitude * Screen.width, normalizedLatitude * Screen.height, 0.0f);
-
-        // Convert the screen position to world space
-        Vector3 worldPosition = Camera.main.ScreenToWorldPoint(screenPosition);
-
-        return worldPosition;
-    }*/
+        lineRenderer.positionCount = nodes.Count;
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            lineRenderer.SetPosition(i, nodes[i].transform.position);
+        }
+    } 
 }

@@ -8,9 +8,6 @@ using UnityEngine;
 [Serializable]
 public class JSONData
 {
-    public float version;
-    public string generator;
-    public IDictionary<string, JToken> osm3s;
     public List<Element> elements;
 }
 
@@ -20,13 +17,15 @@ public class Element
     public string type;
     public long id;
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public double lat; // still doesnt generate all digits
+    public float lat;
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public double lon;
+    public float lon;
     [JsonProperty("nodes", NullValueHandling = NullValueHandling.Ignore)]
     public List<long> nodeIds;
-    [JsonExtensionData, JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+    [ JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public IDictionary<string, JToken> tags;
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+    public string color;
 
     public override string ToString()
     {
@@ -46,7 +45,7 @@ public class Element
         {
             foreach (long nodeId in nodeIds)
             {
-                str += $"{nodeId}, ";
+                str += $" {nodeId},";
             }
         }
 
@@ -54,7 +53,7 @@ public class Element
         {
             foreach (KeyValuePair<string, JToken> tag in tags)
             {
-                str += $"{tag.Key}: {tag.Value}, ";
+                str += $" {tag.Key}: {tag.Value}, ";
             }
         }
 
