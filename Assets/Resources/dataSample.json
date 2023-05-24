@@ -1,0 +1,112 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.60 f4c14d41",
+  "osm3s": {
+    "timestamp_osm_base": "2023-05-23T20:36:21Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "node",
+      "id": 700284359,
+      "lat": 52.5223563,
+      "lon": 13.4057203
+    },
+    {
+      "type": "node",
+      "id": 887148896,
+      "lat": 52.522254,
+      "lon": 13.4054727
+    },
+    {
+      "type": "node",
+      "id": 888323014,
+      "lat": 52.5220879,
+      "lon": 13.4050449
+    },
+    {
+      "type": "node",
+      "id": 4468994521,
+      "lat": 52.522183,
+      "lon": 13.4052999,
+      "tags": {
+        "ele": "36.5"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8091138734,
+      "lat": 52.5226548,
+      "lon": 13.4063218
+    },
+    {
+      "type": "node",
+      "id": 10087224554,
+      "lat": 52.5220532,
+      "lon": 13.4049345
+    },
+    {
+      "type": "way",
+      "id": 1102369940,
+      "nodes": [
+        10087224554,
+        888323014,
+        4468994521,
+        887148896
+      ],
+      "tags": {
+        "bicycle": "designated",
+        "bicycle_road": "yes",
+        "cycleway:both": "no",
+        "highway": "residential",
+        "lane_markings": "no",
+        "lit": "yes",
+        "name": "Rochstraße",
+        "name:etymology:wikidata": "Q95992723",
+        "parking:left": "separate",
+        "parking:right": "no",
+        "postal_code": "10178",
+        "sidewalk": "both",
+        "source:width": "ARCore",
+        "surface": "asphalt",
+        "traffic_sign": "DE:244.1",
+        "vehicle": "destination",
+        "width": "6",
+        "wikidata": "Q95992713",
+        "wikimedia_commons": "Category:Rochstraße (Berlin-Mitte)"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1110526068,
+      "nodes": [
+        887148896,
+        700284359,
+        8091138734
+      ],
+      "tags": {
+        "bicycle": "designated",
+        "bicycle_road": "yes",
+        "cycleway:both": "no",
+        "highway": "residential",
+        "lane_markings": "no",
+        "lit": "yes",
+        "name": "Rochstraße",
+        "name:etymology:wikidata": "Q95992723",
+        "parking:left": "lane",
+        "parking:left:orientation": "parallel",
+        "parking:right": "on_kerb",
+        "parking:right:orientation": "perpendicular",
+        "postal_code": "10178",
+        "sidewalk": "left",
+        "sidewalk:left:surface": "paving_stones",
+        "surface": "asphalt",
+        "traffic_sign": "DE:244.1",
+        "vehicle": "destination",
+        "width": "6",
+        "wikidata": "Q95992713",
+        "wikimedia_commons": "Category:Rochstraße (Berlin-Mitte)"
+      }
+    }
+  ]
+}
