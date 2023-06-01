@@ -8,7 +8,7 @@ public class NodeInfo : MonoBehaviour
 {
     public string type;
     public long id;
-    public double lat; // still doesnt generate all digits
-    public double lon;
+    public float lat;
+    public float lon;
     public Dictionary<string, string> tags;
 }

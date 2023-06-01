@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor.UIElements;
 using UnityEngine;
+using UnityEngine.Networking.Types;
 
 [Serializable]
 public class JSONData
@@ -22,7 +23,7 @@ public class Element
     public float lon;
     [JsonProperty("nodes", NullValueHandling = NullValueHandling.Ignore)]
     public List<long> nodeIds;
-    [ JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public IDictionary<string, JToken> tags;
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public string color;
@@ -61,6 +62,21 @@ public class Element
     }
 }
 
+[Serializable]
+public class Paths
+{
+    public List<List<long>> paths;
+
+    /*public override string ToString()
+    {
+        string str= "";
+        foreach (long nodeId in nodeIds)
+        {
+            str += $" {nodeId},";
+        }
+        return str;
+    }*/
+}
 
 
 
