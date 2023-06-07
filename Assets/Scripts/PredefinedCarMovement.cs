@@ -1,12 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 
 public class PredefinedCarMovement : CarMovement
 {
     private List<Element> _path; // The set of nodes representing the path   
     public List<Element> Path { get => _path; set => _path = value; }
 
+    
 
     private void Start()
     {
@@ -22,20 +24,18 @@ public class PredefinedCarMovement : CarMovement
 
     private void MoveCarAlongPath()
     {
-        // Check if the car has reached the destination node
         if (_currentNode == null)
             return;
 
-        // Check if the car has reached the current node
         Vector3 carPosition = transform.position;
         Vector3 nodePosition = GetPositionFromNode(_currentNode);
         float distanceToNode = Vector3.Distance(carPosition, nodePosition);
-        if (distanceToNode <= 0.1f)
+        float stoppingDistance = 0.1f * _speed; // Adjust the stopping distance based on the car's speed
+
+        if (distanceToNode <= stoppingDistance)
         {
-            // Check if there are more nodes in the path
             if (_path.Count > 1)
             {
-                // Move to the next node in the path
                 _path.RemoveAt(0);
                 _currentNode = _path[0];
                 RotateCarTowardsNode(_currentNode);
@@ -43,12 +43,17 @@ public class PredefinedCarMovement : CarMovement
             else
             {
                 _currentNode = null;
-                // Handle reaching the destination
+                gameObject.SetActive(false);
             }
         }
 
-        // Move the car towards the current node
-        transform.position = Vector3.MoveTowards(carPosition, nodePosition, Time.deltaTime * _speed);
+        float movementDistance = Time.deltaTime * _speed;
+        float clampedDistance = Mathf.Clamp(movementDistance, 0f, distanceToNode);
+
+        Vector3 movementVector = (nodePosition - carPosition).normalized * clampedDistance;
+        transform.position += movementVector;
     }
+
+
 
 }

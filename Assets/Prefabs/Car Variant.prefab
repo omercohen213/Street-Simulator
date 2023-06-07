@@ -11,6 +11,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Car Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 307052563192484888, guid: f45adda7ab4a814469b093281abd0f36, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 307052563192484888, guid: f45adda7ab4a814469b093281abd0f36, type: 3}
+      propertyPath: m_TagString
+      value: Car
+      objectReference: {fileID: 0}
     - target: {fileID: 6873188725940580763, guid: f45adda7ab4a814469b093281abd0f36, type: 3}
       propertyPath: m_Color.b
       value: 1
@@ -26,6 +34,14 @@ PrefabInstance:
     - target: {fileID: 8521582864553701400, guid: f45adda7ab4a814469b093281abd0f36, type: 3}
       propertyPath: m_RootOrder
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8521582864553701400, guid: f45adda7ab4a814469b093281abd0f36, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8521582864553701400, guid: f45adda7ab4a814469b093281abd0f36, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 8521582864553701400, guid: f45adda7ab4a814469b093281abd0f36, type: 3}
       propertyPath: m_LocalPosition.x
@@ -97,6 +113,32 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!61 &-4220397346438467708
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2305828079994200290}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 1, y: 1}
+    newSize: {x: 1, y: 1}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1}
+  m_EdgeRadius: 0
 --- !u!114 &-7967801322218683539
 MonoBehaviour:
   m_ObjectHideFlags: 0
