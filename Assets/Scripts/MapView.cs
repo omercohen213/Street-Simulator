@@ -2,22 +2,32 @@ using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json;
 using System.IO;
-
+using UnityEngine.UIElements;
+using System.Collections;
 
 public class MapView : MonoBehaviour
 {
+    public static MapView Instance;
+
     [SerializeField] private GameObject _nodePrefab;
     [SerializeField] private GameObject _carPrefab;
+    [SerializeField] private GameObject _AICarPrefab;
     private JSONData _mapData;
+    public JSONData MapData { get => _mapData; set => _mapData = value; }
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     void Start()
     {
-        Vector3 startingCamPos = new Vector3(13331.2783f, 52509.2031f, -1);
+        Vector3 startingCamPos = new(13337f, 52509f, -0.1f);
         Camera.main.transform.position = startingCamPos;
 
         string dataString = File.ReadAllText("Assets/Resources/data.json");
         _mapData = JsonConvert.DeserializeObject<JSONData>(dataString);
-
+         
         List<Element> elementNodes = new List<Element>();
         List<Element> ways = new();
 
@@ -37,7 +47,8 @@ public class MapView : MonoBehaviour
         List<GameObject> nodesGo = CreateNodes(elementNodes);
         ConnectNodesWithLines(nodesGo, ways);
 
-        CreateCars(elementNodes);
+        CreatePredefinedCars(elementNodes);
+        StartCoroutine(CreateAICars());
     }
 
     List<GameObject> CreateNodes(List<Element> elementNodes)
@@ -48,6 +59,7 @@ public class MapView : MonoBehaviour
         {
             float scale = 1000;
             Vector3 position = new Vector2(elementNode.lon * scale, elementNode.lat * scale);
+            
             GameObject node = Instantiate(_nodePrefab, position, Quaternion.identity, transform.Find("Nodes"));
             NodeInfo nodeInfo = node.GetComponent<NodeInfo>();
             nodeInfo.type = elementNode.type;
@@ -103,7 +115,7 @@ public class MapView : MonoBehaviour
         }
     }
 
-    private List<GameObject> CreateCars(List<Element> elementNodes)
+    private List<GameObject> CreatePredefinedCars(List<Element> elementNodes)
     {
         List<GameObject> cars = new();
         float scale = 1000;
@@ -112,8 +124,8 @@ public class MapView : MonoBehaviour
         foreach (var path in carPaths)
         {
             Vector3 position = new Vector3(path[0].lon * scale, path[0].lat * scale, 0f);
-            GameObject car = Instantiate(_carPrefab, position, Quaternion.identity);
-            car.GetComponent<CarMovement>().Path = path;
+            GameObject car = Instantiate(_carPrefab, position, Quaternion.identity, transform.Find("Cars"));
+            car.GetComponent<PredefinedCarMovement>().Path = path;
             cars.Add(car);
         }
 
@@ -122,8 +134,8 @@ public class MapView : MonoBehaviour
 
     private List<List<Element>> CreateCarPaths()
     {
-        string pathString = File.ReadAllText("Assets/Resources/paths.json");
-        Paths carPathsData = JsonConvert.DeserializeObject<Paths>(pathString);
+        string dataString = File.ReadAllText("Assets/Resources/paths.json");
+        Paths carPathsData = JsonConvert.DeserializeObject<Paths>(dataString);
         List<List<Element>> carPaths = new();
 
         foreach (var path in carPathsData.paths)
@@ -139,51 +151,16 @@ public class MapView : MonoBehaviour
         }
         return carPaths;
     }
-
-    /*private void MoveCarAlongPath(List<GameObject> cars)
+    private IEnumerator CreateAICars()
     {
-        foreach (GameObject car in cars)
+        while (true)
         {
-            // Check if the car has reached the destination node
-            if (car.path.Count == 0)
-            {
-                // Handle reaching the destination
-                // ...
+            List<GameObject> AICars = new();
+            float scale = 1000;
 
-                return;
-            }
-
-            // Get the next node in the path
-            Element nextNode = car.path[0];
-            car.path.RemoveAt(0);
-
-            // Move the car to the position of the next node
-            Vector3 targetPosition = GetPositionFromNode(nextNode);
-            StartCoroutine(MoveCarToPosition(car.gameObject, targetPosition));
-
-            // Update the car's current node
-            car.currentNode = nextNode;
-        }     
-    }
-
-    private IEnumerator MoveCarToPosition(GameObject carObject, Vector3 targetPosition)
-    {
-        // Define the movement speed or duration
-        float movementSpeed = 5f;
-        float movementDuration = Vector3.Distance(carObject.transform.position, targetPosition) / movementSpeed;
-
-        // Perform the movement over time
-        float elapsedTime = 0f;
-        Vector3 startPosition = carObject.transform.position;
-        while (elapsedTime < movementDuration)
-        {
-            elapsedTime += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsedTime / movementDuration);
-            carObject.transform.position = Vector3.Lerp(startPosition, targetPosition, t);
-            yield return null;
+            Vector3 startingPoint = new Vector3(13.30961f * scale, 52.51171f * scale);
+            GameObject AICar = Instantiate(_AICarPrefab, startingPoint, Quaternion.identity);
+            yield return new WaitForSeconds(2f);
         }
-
-        // Ensure the car reaches the exact target position
-        carObject.transform.position = targetPosition;
-    }*/
+    }
 }

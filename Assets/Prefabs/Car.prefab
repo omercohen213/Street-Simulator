@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8521582864553701400}
   - component: {fileID: 6873188725940580763}
-  - component: {fileID: -4748490537261666843}
+  - component: {fileID: -2836461550325754044}
   m_Layer: 0
   m_Name: Car
   m_TagString: Untagged
@@ -85,7 +85,7 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &-4748490537261666843
+--- !u!114 &-2836461550325754044
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -94,14 +94,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 307052563192484888}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 48371a6858fb8cb449e8f47ae67ce8fd, type: 3}
+  m_Script: {fileID: 11500000, guid: c2df8859985a754419599d90e78d8c83, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  path: []
-  currentNode:
-    type: 
-    id: 0
-    lat: 0
-    lon: 0
-    nodeIds: 
-    color: 

@@ -66,18 +66,7 @@ public class Element
 public class Paths
 {
     public List<List<long>> paths;
-
-    /*public override string ToString()
-    {
-        string str= "";
-        foreach (long nodeId in nodeIds)
-        {
-            str += $" {nodeId},";
-        }
-        return str;
-    }*/
 }
-
 
 
 
