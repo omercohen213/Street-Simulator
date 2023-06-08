@@ -7,49 +7,20 @@ using UnityEngine.Pool;
 public class AICarMovement : CarMovement
 {
     private Dictionary<string, List<long>> _nodeConnections = new();
-    private Element _nextNode;   
+    private Element _startingNode;
+    private Element _nextNode;
 
-    private long _startingNodeID;
-    public long StartingNodeID { get => _startingNodeID; set => _startingNodeID = value; }
-
-    void Start()
+    private void Start()
     {
         string dataString = File.ReadAllText("Assets/Resources/nodes_connection.json");
-        _nodeConnections = JsonConvert.DeserializeObject<Dictionary<string, List<long>>>(dataString);
-
-
-        Element startingNode = FindNodeFromID(_startingNodeID);
-        transform.position = GetPositionFromNode(startingNode);
-        _currentNode = startingNode;
-        _nextNode = GetNextNode();
+        _nodeConnections = JsonConvert.DeserializeObject<Dictionary<string, List<long>>>(dataString);       
     }
 
     void Update()
     {
         if (_nextNode != null)
         {
-            Vector3 carPosition = transform.position;
-            Vector3 nextNodePosition = GetPositionFromNode(_nextNode);
-            float distanceToNode = Vector3.Distance(carPosition, nextNodePosition);
-            _moveDir = (nextNodePosition - carPosition).normalized;
-
-            // Check if there is another car in front
-            bool isObstacleAhead = DetectObstacleAhead();
-
-            if (!isObstacleAhead)
-            {
-                //transform.position += _speed * Time.deltaTime * _moveDir; 
-                transform.position = Vector3.MoveTowards(carPosition, nextNodePosition, Time.deltaTime * _speed);
-
-                // Check if the car has reached the next node
-                if (distanceToNode <= 0.1f)
-                {
-                    _currentNode = _nextNode;
-                    _nextNode = GetNextNode();
-                    if (_nextNode != null)
-                        RotateCarTowardsNode(_nextNode);
-                }
-            }
+            MoveAICar();
         }
         else
         {
@@ -57,24 +28,41 @@ public class AICarMovement : CarMovement
         }
     }
 
-    private bool DetectObstacleAhead()
+    public void SetStartingNode(long _startingNodeID) => _startingNode = FindNodeFromID(_startingNodeID);
+
+    public override void StartRoute()
+    {
+        _currentNode = _startingNode;
+        _nextNode = GetNextNode();
+        base.StartRoute();
+    }
+
+    private void MoveAICar()
     {
         Vector3 carPosition = transform.position;
-        Vector3 forward = -transform.up;
-        Vector3 size = transform.localScale;
+        Vector3 nextNodePosition = GetPositionFromNode(_nextNode);
+        float distanceToNode = Vector3.Distance(carPosition, nextNodePosition);
+        //_moveDir = (nextNodePosition - carPosition).normalized;
 
-        RaycastHit2D hit = Physics2D.Raycast(carPosition, forward, size.y, LayerMask.GetMask("Car"));
-        if (hit.collider != null)
+        // Check if there is another car in front
+        bool isObstacleAhead = DetectObstacleAhead();
+
+        if (!isObstacleAhead)
         {
-            if (hit.transform.TryGetComponent<CarMovement>(out _))
+            //transform.position += _speed * Time.deltaTime * _moveDir; 
+            transform.position = Vector3.MoveTowards(carPosition, nextNodePosition, Time.deltaTime * _speed);
+
+            // Check if the car has reached the next node
+            if (distanceToNode <= 0.1f)
             {
-                Debug.DrawRay(carPosition, forward * size.y, Color.red);
-                return true;
+                _currentNode = _nextNode;
+                _nextNode = GetNextNode();
+                if (_nextNode != null)
+                    RotateCarTowardsNode(_nextNode);
             }
         }
-        Debug.DrawRay(carPosition, forward * size.y, Color.green);
-        return false;
     }
+
 
     // Get the next node to drive to. If there are many options, randomize one of them.
     private Element GetNextNode()
@@ -89,14 +77,7 @@ public class AICarMovement : CarMovement
         }
 
         return null;
-    }
-
-    public Element FindNodeFromID(long nodeId)
-    {
-        JSONData mapData = MapView.Instance.MapData;
-        Element node = mapData.elements.Find(element => element.id == nodeId);
-        return node;
-    }
+    } 
 
     // Returns the IDs of the nodes that connect to the given node
     private List<long> FindConnectionsFromNode(Element node)
@@ -109,28 +90,7 @@ public class AICarMovement : CarMovement
             }
         }
         return null; // Key not found
-    }  
-
-    private void ReachedDestination()
-    {
-        if (_pool != null)
-        {
-            _pool.Release(gameObject);
-        }
-        else
-        {
-            Debug.Log("No pool", this);
-            Destroy(gameObject);
-        }
-    }
-
-    public void RestartRoute()
-    {
-        Element startingNode = FindNodeFromID(_startingNodeID);
-        transform.position = GetPositionFromNode(startingNode);
-        _currentNode = startingNode;
-        _nextNode = GetNextNode();
-    }
+    } 
 
     private void PrintAllNodeConnections()
     {

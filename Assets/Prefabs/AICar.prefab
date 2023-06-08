@@ -9,7 +9,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 307052563192484888, guid: f45adda7ab4a814469b093281abd0f36, type: 3}
       propertyPath: m_Name
-      value: Car Variant
+      value: AICar
       objectReference: {fileID: 0}
     - target: {fileID: 307052563192484888, guid: f45adda7ab4a814469b093281abd0f36, type: 3}
       propertyPath: m_Layer
@@ -37,11 +37,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8521582864553701400, guid: f45adda7ab4a814469b093281abd0f36, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.1
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 8521582864553701400, guid: f45adda7ab4a814469b093281abd0f36, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8521582864553701400, guid: f45adda7ab4a814469b093281abd0f36, type: 3}
       propertyPath: m_LocalPosition.x
@@ -92,7 +92,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 307052563192484888, guid: f45adda7ab4a814469b093281abd0f36, type: 3}
   m_PrefabInstance: {fileID: 1998803020977730810}
   m_PrefabAsset: {fileID: 0}
---- !u!50 &6642014502268967678
+--- !u!50 &-7200796949826808923
 Rigidbody2D:
   serializedVersion: 4
   m_ObjectHideFlags: 0

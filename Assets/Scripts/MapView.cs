@@ -2,10 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json;
 using System.IO;
-using UnityEngine.UIElements;
 using System.Collections;
-using Unity.VisualScripting;
-using TMPro;
 using UnityEngine.Pool;
 
 public class MapView : MonoBehaviour
@@ -13,12 +10,13 @@ public class MapView : MonoBehaviour
     public static MapView Instance;
 
     [SerializeField] private GameObject _nodePrefab;
-    [SerializeField] private GameObject _carPrefab;
+    [SerializeField] private GameObject _predefinedCarPrefab;
     [SerializeField] private GameObject _AICarPrefab;
     private JSONData _mapData;
     public JSONData MapData { get => _mapData; set => _mapData = value; }
 
     ObjectPool<GameObject> _AICarsPool;
+    ObjectPool<GameObject> _preDefinedCarsPool;
 
     private void Awake()
     {
@@ -27,12 +25,12 @@ public class MapView : MonoBehaviour
 
     void Start()
     {
-        Vector3 startingCamPos = new(13337f, 52509f, -0.1f);
-        Camera.main.transform.position = startingCamPos;
         DrawMap();     
 
-        //CreatePredefinedCars(elementNodes);
-        _AICarsPool = new ObjectPool<GameObject>(OnCreateAICar, OnAICarGet, OnAICarRelease, OnAICarDestroy);
+        _preDefinedCarsPool = new ObjectPool<GameObject>(OnCreatePredefinedCar, OnCarGet, OnCarRelease, OnCarDestroy);
+        StartCoroutine(CreatePredefinedCars());
+        
+        _AICarsPool = new ObjectPool<GameObject>(OnCreateAICar, OnCarGet, OnCarRelease, OnCarDestroy);
         StartCoroutine(CreateAICars());
     }
 
@@ -67,8 +65,8 @@ public class MapView : MonoBehaviour
 
         foreach (Element elementNode in elementNodes)
         {
-            float scale = 1000;
-            Vector3 position = new Vector2(elementNode.lon * scale, elementNode.lat * scale);
+            float scale = 10000;
+            Vector3 position = new Vector2(elementNode.lon * scale - 133350f, elementNode.lat * scale -525100f);
             
             GameObject node = Instantiate(_nodePrefab, position, Quaternion.identity, transform.Find("Nodes"));
             NodeInfo nodeInfo = node.GetComponent<NodeInfo>();
@@ -115,32 +113,14 @@ public class MapView : MonoBehaviour
         LineRenderer lineRenderer = way.AddComponent<LineRenderer>();
         //Material defaultMaterial = Resources.GetBuiltinResource<Material>("Default-Material");
         //lineRenderer.material = defaultMaterial;
-        lineRenderer.startWidth = 0.1f;
-        lineRenderer.endWidth = 0.1f;
+        lineRenderer.startWidth = 1f;
+        lineRenderer.endWidth = 1f;
 
         lineRenderer.positionCount = nodes.Count;
         for (int i = 0; i < nodes.Count; i++)
         {
             lineRenderer.SetPosition(i, nodes[i].transform.position);
         }
-    }
-
-    private List<GameObject> CreatePredefinedCars(List<Element> elementNodes)
-    {
-        List<GameObject> cars = new();
-        float scale = 1000;
-
-        List<List<Element>> carPaths = CreateCarPaths();
-        foreach (var path in carPaths)
-        {
-            Vector3 position = new (path[0].lon * scale, path[0].lat * scale, 0f);
-            GameObject car = Instantiate(_carPrefab, position, Quaternion.identity, transform.Find("Cars/PredefinedCars"));
-            car.name = "Car";
-            car.GetComponent<PredefinedCarMovement>().Path = path;
-            cars.Add(car);
-        }
-
-        return cars;
     }
 
     private List<List<Element>> CreateCarPaths()
@@ -166,25 +146,53 @@ public class MapView : MonoBehaviour
     {
         GameObject AICarGo = Instantiate(_AICarPrefab, Vector3.zero, Quaternion.identity, transform.Find("Cars/AICars"));
         AICarGo.name = "AICar";
+        AICarGo.SetActive(false);
+
         AICarMovement AICar = AICarGo.GetComponent<AICarMovement>();
         AICar.SetPool(_AICarsPool);
-        AICarGo.SetActive(false);
+
         return AICarGo;
     }
 
-    private void OnAICarGet(GameObject AICarGo)
+    private GameObject OnCreatePredefinedCar()
     {
-        AICarGo.SetActive(true);
+        GameObject predefinedCarGo = Instantiate(_predefinedCarPrefab, Vector3.zero, Quaternion.identity, transform.Find("Cars/PredefinedCars"));
+        predefinedCarGo.name = "PredefinedCar";
+        predefinedCarGo.SetActive(false);
+        
+        PredefinedCarMovement predefinedCar = predefinedCarGo.GetComponent<PredefinedCarMovement>();
+        predefinedCar.SetPool(_preDefinedCarsPool);
+
+        return predefinedCarGo;
     }
 
-    private void OnAICarRelease(GameObject AICarGo)
+    private void OnCarGet(GameObject CarGo)
     {
-        AICarGo.SetActive(false);
+        CarGo.SetActive(true);
     }
 
-    private void OnAICarDestroy(GameObject AICarGo)
+    private void OnCarRelease(GameObject CarGo)
     {
-        Destroy(AICarGo);
+        CarGo.SetActive(false);
+    }
+
+    private void OnCarDestroy(GameObject CarGo)
+    {
+        Destroy(CarGo);
+    }
+
+    private IEnumerator CreatePredefinedCars()
+    {
+        List<List<Element>> carPaths = CreateCarPaths();
+        foreach (var path in carPaths)
+        {
+            GameObject predefinedCarGo = _preDefinedCarsPool.Get();
+            predefinedCarGo.name = "PredefinedCar";
+            PredefinedCarMovement predefinedCar = predefinedCarGo.GetComponent<PredefinedCarMovement>();
+            predefinedCar.Path = path;
+            predefinedCar.StartRoute();
+            yield return new WaitForSeconds(0.5f);
+        }
     }
 
     private IEnumerator CreateAICars()
@@ -196,8 +204,8 @@ public class MapView : MonoBehaviour
             {
                 GameObject AICarGo = _AICarsPool.Get();
                 AICarMovement AICar = AICarGo.GetComponent<AICarMovement>();
-                AICar.StartingNodeID = startingNodesID[i];
-                AICar.RestartRoute();
+                AICar.SetStartingNode(startingNodesID[i]);
+                AICar.StartRoute();
             }
             yield return new WaitForSeconds(0.5f);
         }
