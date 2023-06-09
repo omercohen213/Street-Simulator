@@ -26,7 +26,8 @@ public class CarMovement : MonoBehaviour
     protected virtual Vector3 GetPositionFromNode(Element node)
     {
         // Convert the node's latitude and longitude to a Vector3 position
-        return new Vector3(node.lon * 10000 - 133350f, node.lat * 10000 - 525100f, 0f);
+        float scale = 10000;
+        return new Vector3(node.lon * scale - 133350f, node.lat * scale - 525100f, 0f);
     }
 
     protected Element FindNodeFromID(long nodeId)

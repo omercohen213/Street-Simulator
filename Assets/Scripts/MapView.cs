@@ -4,6 +4,9 @@ using Newtonsoft.Json;
 using System.IO;
 using System.Collections;
 using UnityEngine.Pool;
+using Newtonsoft.Json.Linq;
+using UnityEditor.Experimental.GraphView;
+using TMPro;
 
 public class MapView : MonoBehaviour
 {
@@ -15,6 +18,9 @@ public class MapView : MonoBehaviour
     private JSONData _mapData;
     public JSONData MapData { get => _mapData; set => _mapData = value; }
 
+    private List<Element> _elementNodes;
+    private List<Element> _ways;
+
     ObjectPool<GameObject> _AICarsPool;
     ObjectPool<GameObject> _preDefinedCarsPool;
 
@@ -25,11 +31,11 @@ public class MapView : MonoBehaviour
 
     void Start()
     {
-        DrawMap();     
+        DrawMap();
 
         _preDefinedCarsPool = new ObjectPool<GameObject>(OnCreatePredefinedCar, OnCarGet, OnCarRelease, OnCarDestroy);
         StartCoroutine(CreatePredefinedCars());
-        
+
         _AICarsPool = new ObjectPool<GameObject>(OnCreateAICar, OnCarGet, OnCarRelease, OnCarDestroy);
         StartCoroutine(CreateAICars());
     }
@@ -39,88 +45,169 @@ public class MapView : MonoBehaviour
         string dataString = File.ReadAllText("Assets/Resources/data.json");
         _mapData = JsonConvert.DeserializeObject<JSONData>(dataString);
 
-        List<Element> elementNodes = new List<Element>();
-        List<Element> ways = new();
+        _elementNodes = new List<Element>();
+        _ways = new List<Element>();
 
         foreach (Element element in _mapData.elements)
         {
             //Debug.Log(element.ToString());
             if (element.type == "node")
             {
-                elementNodes.Add(element);
+                _elementNodes.Add(element);
             }
             else if (element.type == "way")
             {
-                ways.Add(element);
+                _ways.Add(element);
             }
         }
 
-        List<GameObject> nodesGo = CreateNodes(elementNodes);
-        ConnectNodesWithLines(nodesGo, ways);
+        List<GameObject> nodesGo = CreateNodes();
+        ConnectNodesWithLines(nodesGo);
     }
 
-    List<GameObject> CreateNodes(List<Element> elementNodes)
+    List<GameObject> CreateNodes()
     {
         List<GameObject> nodes = new();
 
-        foreach (Element elementNode in elementNodes)
+        foreach (Element elementNode in _elementNodes)
         {
             float scale = 10000;
-            Vector3 position = new Vector2(elementNode.lon * scale - 133350f, elementNode.lat * scale -525100f);
-            
+            Vector3 position = new Vector2(elementNode.lon * scale - 133350f, elementNode.lat * scale - 525100f);
             GameObject node = Instantiate(_nodePrefab, position, Quaternion.identity, transform.Find("Nodes"));
-            NodeInfo nodeInfo = node.GetComponent<NodeInfo>();
+
+            SpriteRenderer nodeSpriteRenderer = node.GetComponent<SpriteRenderer>();
+            nodeSpriteRenderer.sortingLayerName = "Road";
+            nodeSpriteRenderer.sortingOrder = 1;
+
+            // Add node info
+            DataElementInfo nodeInfo = node.GetComponent<DataElementInfo>();
             nodeInfo.type = elementNode.type;
             nodeInfo.id = elementNode.id;
             nodeInfo.lat = elementNode.lat;
             nodeInfo.lon = elementNode.lon;
-            /* if (elementNode.tags != null)
-             {
-                 nodeInfo.tags = elementNode.tags.ToDictionary(kv => kv.Key, kv => kv.Value.ToString()); 
-            }*/
+            nodeInfo.tags = new List<ElementTag>();
+            if (elementNode.tags != null)
+            {
+                foreach (KeyValuePair<string, JToken> pair in elementNode.tags)
+                {
+                    ElementTag elementTag = new()
+                    {
+                        tagName = pair.Key,
+                        value = pair.Value.ToString()
+                    };
+                    nodeInfo.tags.Add(elementTag);
+                }
+            }
             nodes.Add(node);
         }
         return nodes;
     }
-
-    private void ConnectNodesWithLines(List<GameObject> nodes, List<Element> ways)
+        
+    private void ConnectNodesWithLines(List<GameObject> nodes)
     {
-        foreach (Element way in ways)
+        foreach (Element way in _ways)
         {
-            List<GameObject> connectedDots = new List<GameObject>();
+            List<GameObject> nodesToConnect = new();
 
             foreach (long nodeId in way.nodeIds)
             {
-                GameObject node = nodes.Find(x => x.GetComponent<NodeInfo>().id == nodeId);
+                GameObject node = nodes.Find(x => x.GetComponent<DataElementInfo>().id == nodeId);
                 if (node != null)
                 {
-                    connectedDots.Add(node);
+                    nodesToConnect.Add(node);
                 }
             }
 
-            if (connectedDots.Count > 1)
+            if (nodesToConnect.Count > 1)
             {
-                CreateLineRenderer(connectedDots);
+                CreateLineRenderer(nodesToConnect, way);
             }
         }
     }
 
-    private void CreateLineRenderer(List<GameObject> nodes)
+    private void CreateLineRenderer(List<GameObject> nodesToConnect, Element way)
     {
-        GameObject way = new GameObject("Way");
-        way.transform.SetParent(transform.Find("Ways"));
+        GameObject wayGo = new("Way");
+        wayGo.transform.SetParent(transform.Find("Ways"));
 
-        LineRenderer lineRenderer = way.AddComponent<LineRenderer>();
-        //Material defaultMaterial = Resources.GetBuiltinResource<Material>("Default-Material");
-        //lineRenderer.material = defaultMaterial;
+        LineRenderer lineRenderer = wayGo.AddComponent<LineRenderer>();
+        lineRenderer.startColor = Color.gray;
+        lineRenderer.endColor = Color.gray;
+        Material defaultMaterial = new(Shader.Find("Legacy Shaders/Particles/Alpha Blended Premultiply"));
+        lineRenderer.material = defaultMaterial;
         lineRenderer.startWidth = 1f;
         lineRenderer.endWidth = 1f;
+        lineRenderer.sortingLayerName = "Road";
+        lineRenderer.sortingOrder = 0;
 
-        lineRenderer.positionCount = nodes.Count;
-        for (int i = 0; i < nodes.Count; i++)
+        lineRenderer.positionCount = nodesToConnect.Count;
+        for (int i = 0; i < nodesToConnect.Count; i++)
         {
-            lineRenderer.SetPosition(i, nodes[i].transform.position);
+            lineRenderer.SetPosition(i, nodesToConnect[i].transform.position);
         }
+
+        // Add way info
+        DataElementInfo wayInfo = wayGo.AddComponent<DataElementInfo>();
+        wayInfo.type = way.type;
+        wayInfo.id = way.id;
+
+        wayInfo.nodesID = new List<long>();
+        foreach (long id in way.nodeIds)
+        {
+            wayInfo.nodesID.Add(id);
+        }
+
+        wayInfo.tags = new List<ElementTag>();
+        if (way.tags != null)
+        {
+            foreach (KeyValuePair<string, JToken> pair in way.tags)
+            {
+                ElementTag elementTag = new()
+                {
+                    tagName = pair.Key,
+                    value = pair.Value.ToString()
+                };
+                wayInfo.tags.Add(elementTag);
+            }
+        }
+
+        
+
+        /* int laneCount = wayInfo.GetLaneCountInWay();
+
+         // Calculate the offset for each lane
+         float laneWidth = 0.5f;
+         float laneOffset = (laneCount - 1) * laneWidth;
+
+         for (int laneIndex = 0; laneIndex < laneCount; laneIndex++)
+         {
+             // Calculate the lateral offset for the current lane
+             float laneLateralOffset = (laneIndex - laneOffset);
+
+             GameObject laneMarkings = new GameObject("LaneMarkings");
+             laneMarkings.transform.SetParent(wayGo.transform);
+
+             // Create a new line renderer for the lane markings
+             LineRenderer laneRenderer = laneMarkings.AddComponent<LineRenderer>();
+             laneRenderer.startColor = Color.red;
+             laneRenderer.endColor = Color.red;
+             Material defaultMaterial = new(Shader.Find("Legacy Shaders/Particles/Alpha Blended Premultiply"));
+             laneRenderer.material = defaultMaterial;
+
+             // Calculate the lane offset for each node position
+             Vector3 laneOffsetVector = new Vector3(1, 1) * laneLateralOffset;
+
+             // Set the position count and assign positions for the current lane
+             laneRenderer.positionCount = nodesToConnect.Count;
+
+             for (int i = 0; i < nodesToConnect.Count; i++)
+             {
+                 Vector3 position = nodesToConnect[i].transform.position;
+                 // Apply the lane offset to the node position
+                 position += laneOffsetVector;
+                 laneRenderer.SetPosition(i, position);
+             }
+         }*/
     }
 
     private List<List<Element>> CreateCarPaths()
@@ -159,7 +246,7 @@ public class MapView : MonoBehaviour
         GameObject predefinedCarGo = Instantiate(_predefinedCarPrefab, Vector3.zero, Quaternion.identity, transform.Find("Cars/PredefinedCars"));
         predefinedCarGo.name = "PredefinedCar";
         predefinedCarGo.SetActive(false);
-        
+
         PredefinedCarMovement predefinedCar = predefinedCarGo.GetComponent<PredefinedCarMovement>();
         predefinedCar.SetPool(_preDefinedCarsPool);
 
@@ -199,7 +286,7 @@ public class MapView : MonoBehaviour
     {
         while (true)
         {
-            List<long> startingNodesID = new() { 10074389312 , 4782446448, 2715786143, 290148082 };
+            List<long> startingNodesID = new() { 10074389312, 4782446448, 2715786143, 290148082 };
             for (int i = 0; i < 3; i++)
             {
                 GameObject AICarGo = _AICarsPool.Get();
